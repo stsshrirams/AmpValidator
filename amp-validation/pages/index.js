@@ -1,22 +1,24 @@
 import { useState } from 'react';
 
 export default function Home() {
-  const [url, setUrl] = useState('');
-  const [validationResult, setValidationResult] = useState(null);
+  const [urls, setUrls] = useState('');
+  const [validationResults, setValidationResults] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
-  const validateAmp = async () => {
+  const validateUrls = async () => {
     setLoading(true);
     setError(null);
-    setValidationResult(null);
+    setValidationResults([]);
+
+    const urlList = urls.split(',').map(url => url.trim());
 
     try {
-      const res = await fetch(`/api/amp-validate?url=${encodeURIComponent(url)}`);
+      const res = await fetch(`/api/amp-validate?urls=${encodeURIComponent(urlList.join(','))}`);
       const data = await res.json();
 
       if (res.ok) {
-        setValidationResult(data);
+        setValidationResults(data);
       } else {
         setError(data.error || 'An error occurred');
       }
@@ -30,22 +32,50 @@ export default function Home() {
   return (
     <div>
       <h1>AMP Validation Tool</h1>
-      <input
-        type="text"
-        placeholder="Enter URL"
-        value={url}
-        onChange={(e) => setUrl(e.target.value)}
+      <textarea
+        placeholder="Enter URLs separated by commas"
+        value={urls}
+        onChange={(e) => setUrls(e.target.value)}
+        rows={4}
+        style={{ width: '100%' }}
       />
-      <button onClick={validateAmp} disabled={loading}>
-        {loading ? 'Validating...' : 'Validate AMP'}
+      <button onClick={validateUrls} disabled={loading}>
+        {loading ? 'Validating...' : 'Validate AMP URLs'}
       </button>
 
       {error && <div style={{ color: 'red' }}>{error}</div>}
 
-      {validationResult && (
+      {validationResults.length > 0 && (
         <div>
-          <h2>Validation Result:</h2>
-          <pre>{JSON.stringify(validationResult, null, 2)}</pre>
+          <h2>Validation Results:</h2>
+          <table border="1" cellPadding="10" style={{ marginTop: '20px', width: '100%' }}>
+            <thead>
+              <tr>
+                <th>URL</th>
+                <th>Status</th>
+                <th>Errors</th>
+              </tr>
+            </thead>
+            <tbody>
+              {validationResults.map((result, index) => (
+                <tr key={index}>
+                  <td>{result.url}</td>
+                  <td>{result.status}</td>
+                  <td>
+                    {result.errors.length > 0 ? (
+                      <ul>
+                        {result.errors.map((error, i) => (
+                          <li key={i}>{error.message} (Line {error.line}, Col {error.col})</li>
+                        ))}
+                      </ul>
+                    ) : (
+                      <span>No Errors</span>
+                    )}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
         </div>
       )}
     </div>
