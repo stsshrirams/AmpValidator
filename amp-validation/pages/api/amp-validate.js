@@ -8,8 +8,9 @@ export default async function handler(req, res) {
     return res.status(400).json({ error: 'URLs are required' });
   }
 
+  // Split the incoming URLs by commas and trim each URL
   const urlList = urls.split(',').map(url => url.trim());
-  const validationPromises = urlList.map((url) => validateUrl(url));
+  const validationPromises = urlList.map((url, index) => validateUrl(url, index + 1));
 
   try {
     const results = await Promise.all(validationPromises);
@@ -23,7 +24,7 @@ export default async function handler(req, res) {
 }
 
 // Helper function to validate a single URL
-async function validateUrl(url) {
+async function validateUrl(url, id) {
   try {
     // Fetch the HTML content of the specified URL as a mobile device
     const response = await axios.get(url, {
@@ -38,6 +39,7 @@ async function validateUrl(url) {
     // Check for the mandatory ⚡ (amp) attribute in the <html> tag
     if (!html.includes('<html ⚡>') && !html.includes('<html amp>')) {
       return {
+        id,  // Add the id here
         url,
         isValid: false,
         status: 'NON-AMP',
@@ -58,6 +60,7 @@ async function validateUrl(url) {
 
     // Structure the response based on validation results
     return {
+      id,  // Add the id here
       url,
       isValid: validationResult.status === 'PASS',
       status: validationResult.status,
@@ -72,6 +75,7 @@ async function validateUrl(url) {
     // Catch other types of errors (e.g., network errors, invalid URL)
     if (error.response && error.response.status === 404) {
       return {
+        id,  // Add the id here
         url,
         isValid: false,
         status: 'ERROR',
@@ -86,6 +90,7 @@ async function validateUrl(url) {
 
     // Handle other errors
     return {
+      id,  // Add the id here
       url,
       isValid: false,
       status: 'ERROR',

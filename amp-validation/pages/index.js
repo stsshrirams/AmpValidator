@@ -30,7 +30,7 @@ export default function Home() {
   };
 
   return (
-    <div>
+    <div className='container py-5'>
       <h1>AMP Validation Tool</h1>
       <textarea
         placeholder="Enter URLs separated by commas"
@@ -39,18 +39,19 @@ export default function Home() {
         rows={4}
         style={{ width: '100%' }}
       />
-      <button onClick={validateUrls} disabled={loading}>
+      <button className='btn btn-primary' onClick={validateUrls} disabled={loading}>
         {loading ? 'Validating...' : 'Validate AMP URLs'}
       </button>
 
       {error && <div style={{ color: 'red' }}>{error}</div>}
 
       {validationResults.length > 0 && (
-        <div>
+        <div className='mt-3'>
           <h2>Validation Results:</h2>
-          <table border="1" cellPadding="10" style={{ marginTop: '20px', width: '100%' }}>
+          <table border="1" cellPadding="10" className='table table-bordered'>
             <thead>
               <tr>
+                <th>S.No.</th>
                 <th>URL</th>
                 <th>Status</th>
                 <th>Errors</th>
@@ -59,6 +60,7 @@ export default function Home() {
             <tbody>
               {validationResults.map((result, index) => (
                 <tr key={index}>
+                  <td>{result.url}</td>
                   <td>{result.url}</td>
                   <td>{result.status}</td>
                   <td>
