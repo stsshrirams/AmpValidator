@@ -71,7 +71,7 @@ export default function Home() {
                         ))}
                       </ul>
                     ) : (
-                      <span>No Errors</span>
+                      <span>No Errors </span>
                     )}
                   </td>
                 </tr>
