@@ -33,13 +33,14 @@ export default function Home() {
     <div className='container py-5'>
       <h1>AMP Validation Tool</h1>
       <textarea
-        placeholder="Enter URLs separated by commas"
+        placeholder="Enter URLs separated by commas or one by one"
         value={urls}
         onChange={(e) => setUrls(e.target.value)}
-        rows={4}
+        rows={8}
         style={{ width: '100%' }}
+        className='form-control'
       />
-      <button className='btn btn-primary' onClick={validateUrls} disabled={loading}>
+      <button className='btn btn-primary mt-4' onClick={validateUrls} disabled={loading}>
         {loading ? 'Validating...' : 'Validate AMP URLs'}
       </button>
 

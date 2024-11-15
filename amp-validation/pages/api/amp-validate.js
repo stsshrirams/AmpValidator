@@ -1,5 +1,8 @@
 import axios from 'axios';
 import validator from 'amphtml-validator';
+import pLimit from 'p-limit';
+
+const MAX_CONCURRENT_REQUESTS = 5; // Limit the number of concurrent requests
 
 export default async function handler(req, res) {
   const { urls } = req.query;
@@ -8,9 +11,19 @@ export default async function handler(req, res) {
     return res.status(400).json({ error: 'URLs are required' });
   }
 
-  // Split the incoming URLs by commas and trim each URL
-  const urlList = urls.split(',').map(url => url.trim());
-  const validationPromises = urlList.map((url, index) => validateUrl(url, index + 1));
+  // Use regex to split URLs by their prefix ('http' or 'https')
+  const urlList = urls.match(/https?:\/\/[^\s]+/g) || [];
+
+  if (urlList.length === 0) {
+    return res.status(400).json({ error: 'No valid URLs found' });
+  }
+
+  const limit = pLimit(MAX_CONCURRENT_REQUESTS);
+
+  // Create validation promises with concurrency control
+  const validationPromises = urlList.map((url, index) =>
+    limit(() => validateUrl(url, index + 1))
+  );
 
   try {
     const results = await Promise.all(validationPromises);
@@ -18,7 +31,7 @@ export default async function handler(req, res) {
   } catch (error) {
     res.status(500).json({
       error: 'Error validating AMP URLs',
-      details: error.message,  // Send only the error message, not the full HTML
+      details: error.message,
     });
   }
 }
@@ -26,12 +39,12 @@ export default async function handler(req, res) {
 // Helper function to validate a single URL
 async function validateUrl(url, id) {
   try {
-    // Fetch the HTML content of the specified URL as a mobile device
     const response = await axios.get(url, {
       headers: {
         'User-Agent':
           'Mozilla/5.0 (iPhone; CPU iPhone OS 14_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Mobile/15E148',
       },
+      timeout: 10000, // Timeout for each request
     });
 
     const html = response.data;
@@ -39,7 +52,7 @@ async function validateUrl(url, id) {
     // Check for the mandatory ⚡ (amp) attribute in the <html> tag
     if (!html.includes('<html ⚡>') && !html.includes('<html amp>')) {
       return {
-        id,  // Add the id here
+        id,
         url,
         isValid: false,
         status: 'NON-AMP',
@@ -47,8 +60,6 @@ async function validateUrl(url, id) {
           {
             message: "Missing '⚡' attribute in <html> tag",
             severity: 'ERROR',
-            line: 4, // Example line number, can be dynamically calculated if needed
-            col: 0,  // Column number where the <html> tag is found
           },
         ],
       };
@@ -58,9 +69,8 @@ async function validateUrl(url, id) {
     const ampValidator = await validator.getInstance();
     const validationResult = ampValidator.validateString(html);
 
-    // Structure the response based on validation results
     return {
-      id,  // Add the id here
+      id,
       url,
       isValid: validationResult.status === 'PASS',
       status: validationResult.status,
@@ -72,10 +82,9 @@ async function validateUrl(url, id) {
       })),
     };
   } catch (error) {
-    // Catch other types of errors (e.g., network errors, invalid URL)
     if (error.response && error.response.status === 404) {
       return {
-        id,  // Add the id here
+        id,
         url,
         isValid: false,
         status: 'ERROR',
@@ -88,9 +97,8 @@ async function validateUrl(url, id) {
       };
     }
 
-    // Handle other errors
     return {
-      id,  // Add the id here
+      id,
       url,
       isValid: false,
       status: 'ERROR',
