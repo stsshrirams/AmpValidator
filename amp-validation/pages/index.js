@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import TagManager from 'react-gtm-module';
 
 export default function Home() {
   const [urls, setUrls] = useState('');
@@ -28,7 +29,11 @@ export default function Home() {
 
     setLoading(false);
   };
-
+  const tagManagerArgs = {
+    gtmId: 'G-H4SEWQSGXM'
+}
+ 
+TagManager.initialize(tagManagerArgs)
   return (
     <div className='container py-5'>
       <h1>AMP Validation Tool</h1>
