@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import TagManager from 'react-gtm-module';
 
 export default function Home() {
@@ -29,11 +29,13 @@ export default function Home() {
 
     setLoading(false);
   };
-  const tagManagerArgs = {
-    gtmId: 'G-H4SEWQSGXM'
-}
- 
-TagManager.initialize(tagManagerArgs)
+  useEffect(()=> {
+    TagManager.initialize({gtmId:"G-H4SEWQSGXM"})
+    window.dataLayer.push({
+        event: 'pageview',
+        pagePath: window.location.pathname,
+    });
+  })
   return (
     <div className='container py-5'>
       <h1>AMP Validation Tool</h1>
